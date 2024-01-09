@@ -1,0 +1,5 @@
+[workspace]
+
+members = [
+    "semdesk-api", "semdesk-vector",
+]
