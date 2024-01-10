@@ -1,47 +1,48 @@
 use actix::dev::{MessageResponse, OneshotSender};
 use actix::prelude::*;
-use serde::Serialize;
+use semdesk_vector::embed;
+use semdesk_vector::jina_candle::JinaCandle;
 use usearch::{new_index, Index};
 
-use log::info;
-use semdesk_vector::{to_vec, LoadedModel, build_model_and_tokenizer_jina};
 use usearch::ffi::{IndexOptions, MetricKind, ScalarKind};
 
 #[derive(Message)]
-#[rtype(result = "IndexResponse")]
-pub enum IndexMessage {
-    Index { key: u64, text: String },
+#[rtype(result = "SearchResponse")]
+pub enum SearchMessage {
     Search { query: String },
+    Index { key: u64, vector: Vec<f32> },
 }
 
+#[derive(Debug)]
 pub struct SearchResult {
     pub key: u64,
     pub distance: f32,
 }
 
-pub enum IndexResponse {
-    IndexResult,
+#[derive(Debug)]
+pub enum SearchResponse {
     SearchResult { results: Vec<SearchResult> },
+    IndexResult,
 }
 
-impl<A, M> MessageResponse<A, M> for IndexResponse
+impl<A, M> MessageResponse<A, M> for SearchResponse
 where
     A: Actor,
-    M: Message<Result = IndexResponse>,
+    M: Message<Result = SearchResponse>,
 {
-    fn handle(self, ctx: &mut A::Context, tx: Option<OneshotSender<M::Result>>) {
+    fn handle(self, _ctx: &mut A::Context, tx: Option<OneshotSender<M::Result>>) {
         if let Some(tx) = tx {
-            tx.send(self);
+            tx.send(self).unwrap();
         }
     }
 }
 
-pub struct IndexActor {
+pub struct SearcherActor {
+    model: JinaCandle,
     index: Index,
-    model: LoadedModel,
 }
 
-impl Actor for IndexActor {
+impl Actor for SearcherActor {
     type Context = SyncContext<Self>;
 
     fn started(&mut self, _ctx: &mut SyncContext<Self>) {
@@ -53,7 +54,8 @@ impl Actor for IndexActor {
     }
 }
 
-pub fn indexer() -> IndexActor {
+
+pub fn searcher() -> SearcherActor {
     let options = IndexOptions {
         multi: false,
         dimensions: 512, //768,
@@ -65,40 +67,33 @@ pub fn indexer() -> IndexActor {
     };
 
     let index = new_index(&options).unwrap();
-    
+
     match index.load("index.usearch") {
         Err(_) => {
             index.save("index.usearch").unwrap();
         }
-        Ok(_) => info!("All good")
+        Ok(_) => ()
     }
-    index.reserve(10).unwrap();
 
-    let model = build_model_and_tokenizer_jina().unwrap();
+    let model = JinaCandle::new().unwrap();
 
-    IndexActor {
-        index: index,
+    SearcherActor {
         model: model,
+        index: index,
     }
 }
 
-impl Handler<IndexMessage> for IndexActor {
-    type Result = IndexResponse;
 
-    fn handle(&mut self, msg: IndexMessage, _ctx: &mut SyncContext<Self>) -> Self::Result {
+impl Handler<SearchMessage> for SearcherActor {
+    type Result = SearchResponse;
+
+    fn handle(&mut self, msg: SearchMessage, _ctx: &mut SyncContext<Self>) -> Self::Result {
         match msg {
-            IndexMessage::Index { key, text } => {
-                let v = to_vec(&mut self.model, &[&text]);
-                info!("Got vector of length {}", v[0].len());
-                self.index.add(key, &v[0]).unwrap();
-                self.index.save("index.usearch").unwrap();
-                return IndexResponse::IndexResult;
-            }
-            IndexMessage::Search { query } => {
-                let v = to_vec(&mut self.model, &[&query]);
+            SearchMessage::Search { query } => {
+                let v = embed(&mut self.model, &[&query]);
                 let results = self.index.search(&v[0], 10).unwrap();
 
-                return IndexResponse::SearchResult {
+                return SearchResponse::SearchResult {
                     results: results
                         .keys
                         .iter()
@@ -109,6 +104,15 @@ impl Handler<IndexMessage> for IndexActor {
                         })
                         .collect::<Vec<_>>(),
                 };
+            }
+            SearchMessage::Index { key, vector } => {
+                if self.index.capacity() <= self.index.size() {
+                    self.index.reserve(self.index.capacity() * 2).unwrap();
+                }
+
+                self.index.add(key, vector.as_slice()).unwrap();
+                self.index.save("index.usearch").unwrap();
+                SearchResponse::IndexResult
             }
         }
     }

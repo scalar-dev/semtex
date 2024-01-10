@@ -1,16 +1,16 @@
-mod actor;
+mod indexer;
+mod searcher;
 
 use core::panic;
 
 use actix::{Addr, SyncArbiter};
 use actix_web::middleware::Logger;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use actor::{indexer, IndexActor };
 use env_logger::Env;
+use indexer::{indexer, IndexerActor};
 use rand::RngCore;
+use searcher::{searcher, SearcherActor};
 use serde::{Deserialize, Serialize};
-
-use crate::actor::IndexResponse;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -47,16 +47,16 @@ struct SearchResults {
 }
 
 struct AppState {
-    indexer: Addr<IndexActor>,
+    searcher: Addr<SearcherActor>,
+    indexer: Addr<IndexerActor>,
 }
 
 #[post("/ingest")]
 async fn ingest(ingest: web::Json<Ingest>, data: web::Data<AppState>) -> impl Responder {
     let mut rng = rand::thread_rng();
     let key = rng.next_u64();
-    let response = data
-        .indexer
-        .send(actor::IndexMessage::Index {
+    data.indexer
+        .send(indexer::IndexMessage::Index {
             key: key,
             text: ingest.content.clone(),
         })
@@ -69,34 +69,41 @@ async fn ingest(ingest: web::Json<Ingest>, data: web::Data<AppState>) -> impl Re
 #[get("/search")]
 async fn search(search: web::Query<Search>, data: web::Data<AppState>) -> impl Responder {
     let response = data
-        .indexer
-        .send(actor::IndexMessage::Search {
+        .searcher
+        .send(searcher::SearchMessage::Search {
             query: search.query.clone(),
         })
         .await
         .unwrap();
 
     match response {
-        IndexResponse::SearchResult { results } => web::Json(SearchResults {
-            results: results.iter().map(|r| SearchResult {
-                key: r.key,
-                distance: r.distance,
-            }).collect::<Vec<_>>()
+        searcher::SearchResponse::SearchResult { results } => web::Json(SearchResults {
+            results: results
+                .iter()
+                .map(|r| SearchResult {
+                    key: r.key,
+                    distance: r.distance,
+                })
+                .collect::<Vec<_>>(),
         }),
-        _ => panic!()
+        _ => panic!(),
     }
-
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    let indexer = SyncArbiter::start(1, || indexer());
+    let searcher = SyncArbiter::start(1, || searcher());
+    let s1_addr = searcher.clone();
+    let indexer = SyncArbiter::start(1, move || indexer(s1_addr.clone()));
+
     HttpServer::new(move || {
+        let searcher = searcher.clone();
         App::new()
             .app_data(web::Data::new(AppState {
                 indexer: indexer.clone(),
+                searcher: searcher.clone(),
             }))
             .service(hello)
             .service(ingest)
