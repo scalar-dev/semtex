@@ -14,7 +14,7 @@ browser.runtime.onMessage.addListener((message) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: rdb.title,
+        title: rdb.title || message.content.title,
         content: rdb.textContent,
         source: {
           name: "browser",

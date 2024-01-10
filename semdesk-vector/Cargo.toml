@@ -10,5 +10,6 @@ candle-core = {version = "0.3.2"}
 candle-nn = {version = "0.3.2"}
 candle-transformers = {version = "0.3.2"}
 hf-hub = "0.3.2"
+rust-bert = { version = "0.21.0", features = ["download-libtorch"]}
 serde_json = "1.0.111"
 tokenizers = "0.15.0"

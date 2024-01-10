@@ -3,6 +3,9 @@ use candle_core::{
     utils::{cuda_is_available, metal_is_available},
     Device, Error, Tensor,
 };
+use tokenizers::Encoding;
+
+use crate::embedding::TokenizedOutput;
 
 pub fn hub_load_safetensors_files(
     repo: &hf_hub::api::sync::ApiRepo,
@@ -69,3 +72,22 @@ pub fn get_mask(size: usize, device: &Device) -> Tensor {
         .collect();
     Tensor::from_slice(&mask, (size, size), device).unwrap()
 }
+
+pub struct BertTokens {
+    pub encoding: Encoding
+}
+
+pub fn token_ids(bert_tokens: &Vec<BertTokens>, device: &Device) -> Tensor {
+    let token_ids = bert_tokens
+        .iter()
+        .map(|tokens| {
+            let tokens = tokens.encoding.get_ids().to_vec();
+            Ok(Tensor::new(tokens.as_slice(), device).unwrap())
+        })
+        .collect::<candle_core::Result<Vec<_>>>()
+        .unwrap();
+    Tensor::stack(&token_ids, 0).unwrap()
+}
+
+
+impl TokenizedOutput for BertTokens {}

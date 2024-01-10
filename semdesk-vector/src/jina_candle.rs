@@ -7,20 +7,15 @@ use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
 
 use crate::{
-    embedding::{EmbeddingModel, TokenizedOutput},
-    util::{device, hub_load_safetensors_files},
+    embedding::EmbeddingModel,
+    util::{device, hub_load_safetensors_files, token_ids, BertTokens},
 };
 
+#[derive(Clone)]
 pub struct JinaCandle {
     model: JinaModel,
     tokenizer: Tokenizer,
 }
-
-pub struct JinaTokens {
-    token_ids: Tensor,
-}
-
-impl TokenizedOutput for JinaTokens {}
 
 impl JinaCandle {
     pub fn new() -> Result<JinaCandle> {
@@ -58,45 +53,36 @@ impl JinaCandle {
 }
 
 impl EmbeddingModel for JinaCandle {
-    type TokenizedOutput = JinaTokens;
+    type TokenizedOutput = BertTokens;
 
-    fn tokenize(self: &Self, text: &[&str]) -> JinaTokens {
-        let device = device(true).unwrap();
+    fn tokenize(self: &Self, text: &[&str]) -> Vec<BertTokens> {
         let mut tokenizer = self.tokenizer.clone();
 
         let tokenizer = tokenizer.with_padding(None).with_truncation(None).unwrap();
 
         let tokens = tokenizer.encode_batch(text.to_vec(), true).unwrap();
 
-        let token_ids = tokens
+        return tokens
             .iter()
-            .map(|tokens| {
-                let tokens = tokens.get_ids().to_vec();
-                Ok(Tensor::new(tokens.as_slice(), &device).unwrap())
+            .map(|encoding| BertTokens {
+                encoding: encoding.clone(),
             })
-            .collect::<candle_core::Result<Vec<_>>>()
-            .unwrap();
-        let token_ids = Tensor::stack(&token_ids, 0).unwrap();
-
-        return JinaTokens {
-            token_ids: token_ids,
-        };
+            .collect::<Vec<_>>();
     }
 
-    fn embed(self: &Self, tokenized_output: JinaTokens) -> Vec<Vec<f32>> {
-        let now = Instant::now();
+    fn embed(self: &Self, tokenized_output: Vec<BertTokens>) -> Vec<Vec<f32>> {
+        let device = device(true).unwrap();
         let embeddings = self
             .model
-            .forward(&tokenized_output.token_ids /*, &token_type_ids*/)
+            .forward(&token_ids(
+                &tokenized_output,
+                &device, /*, &token_type_ids*/
+            ))
             .unwrap();
-        println!("Elapsed: {}", now.elapsed().as_millis());
-        println!("generated embeddings {:?}", embeddings.shape());
         let (_n_sentence, n_tokens, _hidden_size) = embeddings.dims3().unwrap();
 
         let embeddings = (embeddings.sum(1).unwrap() / (n_tokens as f64)).unwrap();
         normalize_l2(&embeddings).unwrap();
-
-        println!("pooled embeddings {:?}", embeddings.shape());
 
         embeddings.to_vec2().unwrap()
     }

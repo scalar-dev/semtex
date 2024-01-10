@@ -1,10 +1,15 @@
+use std::cmp::{min, max};
+
 use actix::dev::{MessageResponse, OneshotSender};
 use actix::prelude::*;
 use semdesk_vector::embed;
 use semdesk_vector::jina_candle::JinaCandle;
+use semdesk_vector::minilm::MiniLM;
 use usearch::{new_index, Index};
 
 use usearch::ffi::{IndexOptions, MetricKind, ScalarKind};
+
+use crate::Models;
 
 #[derive(Message)]
 #[rtype(result = "SearchResponse")]
@@ -38,7 +43,8 @@ where
 }
 
 pub struct SearcherActor {
-    model: JinaCandle,
+    models: Models,
+    minilm: MiniLM,
     index: Index,
 }
 
@@ -55,10 +61,10 @@ impl Actor for SearcherActor {
 }
 
 
-pub fn searcher() -> SearcherActor {
+pub fn searcher(models: &Models) -> SearcherActor {
     let options = IndexOptions {
         multi: false,
-        dimensions: 512, //768,
+        dimensions: 384, //512, //768,
         metric: MetricKind::Cos,
         quantization: ScalarKind::F32,
         connectivity: 0,
@@ -75,10 +81,9 @@ pub fn searcher() -> SearcherActor {
         Ok(_) => ()
     }
 
-    let model = JinaCandle::new().unwrap();
-
     SearcherActor {
-        model: model,
+        models: models.clone(),
+        minilm: MiniLM::new(),
         index: index,
     }
 }
@@ -90,7 +95,9 @@ impl Handler<SearchMessage> for SearcherActor {
     fn handle(&mut self, msg: SearchMessage, _ctx: &mut SyncContext<Self>) -> Self::Result {
         match msg {
             SearchMessage::Search { query } => {
-                let v = embed(&mut self.model, &[&query]);
+                let v = embed(&mut self.minilm, &[&query]);
+                println!("Vector {}", v.len());
+                println!("Vector {}", v[0].len());
                 let results = self.index.search(&v[0], 10).unwrap();
 
                 return SearchResponse::SearchResult {
@@ -107,7 +114,7 @@ impl Handler<SearchMessage> for SearcherActor {
             }
             SearchMessage::Index { key, vector } => {
                 if self.index.capacity() <= self.index.size() {
-                    self.index.reserve(self.index.capacity() * 2).unwrap();
+                    self.index.reserve(max(100, self.index.capacity() * 2)).unwrap();
                 }
 
                 self.index.add(key, vector.as_slice()).unwrap();

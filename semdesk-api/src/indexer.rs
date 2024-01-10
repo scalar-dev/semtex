@@ -1,8 +1,10 @@
 use actix::dev::{MessageResponse, OneshotSender};
 use actix::prelude::*;
+use actix_web::rt::Runtime;
 use semdesk_vector::embed;
-use semdesk_vector::jina_candle::JinaCandle;
+use semdesk_vector::minilm::MiniLM;
 
+use crate::Models;
 use crate::searcher::SearcherActor;
 
 #[derive(Message)]
@@ -29,8 +31,9 @@ where
 }
 
 pub struct IndexerActor {
-    model: JinaCandle,
+    models: Models,
     searcher: Addr<SearcherActor>,
+    minilm: MiniLM,
 }
 
 impl Actor for IndexerActor {
@@ -45,12 +48,11 @@ impl Actor for IndexerActor {
     }
 }
 
-pub fn indexer(searcher: Addr<SearcherActor>) -> IndexerActor {
-    let model = JinaCandle::new().unwrap();
-
+pub fn indexer(models: &Models, searcher: &Addr<SearcherActor>) -> IndexerActor {
     IndexerActor {
-        model: model,
-        searcher: searcher,
+        models: models.clone(),
+        searcher: searcher.clone(),
+        minilm: MiniLM::new(),
     }
 }
 
@@ -58,14 +60,15 @@ impl Handler<IndexMessage> for IndexerActor {
     type Result = IndexResponse;
 
     fn handle(&mut self, msg: IndexMessage, _ctx: &mut SyncContext<Self>) -> Self::Result {
+        let rt = Runtime::new().unwrap();
         match msg {
             IndexMessage::Index { key, text } => {
-                let v = embed(&mut self.model, &[&text]);
+                let v = embed(&mut self.minilm, &[&text]);
 
-                let _ = self.searcher.send(crate::searcher::SearchMessage::Index {
+                rt.block_on(self.searcher.send(crate::searcher::SearchMessage::Index {
                     key,
                     vector: v[0].clone(),
-                });
+                })).unwrap();
 
                 return IndexResponse::IndexResult;
             }

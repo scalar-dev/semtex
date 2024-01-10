@@ -15,3 +15,8 @@ semdesk-vector = { path = "../semdesk-vector" }
 log = "0.4.20"
 usearch = "2.8.14"
 rand = "0.8.5"
+sea-orm = { version = "0.12", features = [ "sqlx-sqlite", "runtime-tokio-native-tls", "macros" ] }
+chrono = { version = "0.4", features = ["unstable-locales"] }
+
+entity = { path = "../entity" }
+migration = { path = "../migration" } # depends on your needs

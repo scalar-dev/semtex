@@ -1,5 +1,5 @@
 [workspace]
 
 members = [
-    "semdesk-api", "semdesk-vector",
-]
+    "semdesk-api", "semdesk-vector", "migration"
+, "entity"]

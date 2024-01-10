@@ -1,8 +1,10 @@
 pub mod embedding;
 pub mod jina_candle;
+pub mod minilm;
 mod util;
 
 use embedding::{EmbeddingModel, TokenizedOutput};
+use jina_candle::JinaCandle;
 
 // pub fn build_model_and_tokenizer() -> candle_core::Result<LoadedModel> {
 //     let device = device(true)?;
@@ -31,6 +33,8 @@ use embedding::{EmbeddingModel, TokenizedOutput};
 //         tokenizer: tokenizer,
 //     })
 // }
+
+
 
 pub fn embed<T: TokenizedOutput>(
     model: &mut dyn EmbeddingModel<TokenizedOutput = T>,
