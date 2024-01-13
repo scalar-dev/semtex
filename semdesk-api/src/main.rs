@@ -31,6 +31,11 @@ struct Source {
 
 #[derive(Deserialize)]
 struct Ingest {
+    items: Vec<IngestItem>,
+}
+
+#[derive(Deserialize)]
+struct IngestItem {
     title: String,
     content: String,
     source: Source,
@@ -72,27 +77,29 @@ async fn root() -> impl Responder {
 
 #[post("/ingest")]
 async fn ingest(ingest: web::Json<Ingest>, data: web::Data<AppState>) -> impl Responder {
-    let record = content::ActiveModel {
-        id: ActiveValue::NotSet,
-        created_at: ActiveValue::Set(Utc::now().to_rfc3339()),
-        title: ActiveValue::Set(ingest.title.to_owned()),
-        text: ActiveValue::Set(ingest.content.to_owned()),
-        source: ActiveValue::Set(ingest.source.name.to_owned()),
-        url: ActiveValue::Set(ingest.source.url.to_owned()),
-    };
+    for item in &ingest.items {
+        let record = content::ActiveModel {
+            id: ActiveValue::NotSet,
+            created_at: ActiveValue::Set(Utc::now().to_rfc3339()),
+            title: ActiveValue::Set(item.title.to_owned()),
+            text: ActiveValue::Set(item.content.to_owned()),
+            source: ActiveValue::Set(item.source.name.to_owned()),
+            url: ActiveValue::Set(item.source.url.to_owned()),
+        };
 
-    let result = record.insert(&data.db).await;
-    let key = result.unwrap().id;
+        let result = record.insert(&data.db).await;
+        let key = result.unwrap().id;
 
-    data.indexer
-        .send(indexer::IndexMessage::Index {
-            key: key as u64,
-            text: ingest.content.clone(),
-        })
-        .await
-        .unwrap();
+        data.indexer
+            .send(indexer::IndexMessage::Index {
+                key: key as u64,
+                text: item.content.clone(),
+            })
+            .await
+            .unwrap();
+    }
 
-    format!("ingested {}", key)
+    format!("ingested {}", ingest.items.len())
 }
 
 #[get("/search")]
