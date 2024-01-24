@@ -11,6 +11,11 @@ const manifest = {
       matches: ["*://*/*"],
     },
   ],
+  browser_specific_settings: {
+    gecko: {
+      id: "semdesk@scalar.dev"
+    },
+  },
   browser_action: {
     default_icon: {
       16: "icons/16.png",

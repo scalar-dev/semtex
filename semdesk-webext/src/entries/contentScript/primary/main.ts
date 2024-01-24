@@ -1,4 +1,3 @@
-import { isProbablyReaderable } from "@mozilla/readability";
 import renderContent from "../renderContent";
 import "./style.css";
 import * as browser from "webextension-polyfill";

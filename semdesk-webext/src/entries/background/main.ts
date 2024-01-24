@@ -56,7 +56,7 @@ setInterval(async () => {
   } finally {
     unlock();
   }
-}, 30000);
+}, 10_000);
 
 browser.runtime.onMessage.addListener(async (message) => {
   if (message.type == "store") {

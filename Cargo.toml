@@ -2,4 +2,4 @@
 
 members = [
     "semdesk-api", "semdesk-vector", "migration"
-, "entity"]
+, "entity", "semdesk-app/src-tauri"]
