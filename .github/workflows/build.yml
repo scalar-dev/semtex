@@ -15,9 +15,12 @@ jobs:
           apt-get install -y python3-pip
           pip3 install torch  --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Run
+      - name: Build
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib/python3.9/dist-packages/torch/lib
+          export LIBTORCH_USE_PYTORCH=1
+          export LIBTORCH_BYPASS_VERSION_CHECK=1
+
           npm install
           npm run tauri -- build --verbose
         working-directory: ./semdesk-app
