@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
 import { ResultList } from "./ResultList";
 
 function App() {
   const [name, setName] = useState("");
   const [data, setData] = useState<any[]>([]);
 
-  async function greet() {
+  async function search() {
     const r = await fetch(`http://localhost:8080/search?query=${name}`, {
       headers: { "Content-Type": "application/json" },
     });
@@ -15,15 +14,15 @@ function App() {
 
   return (
     <>
-      <div className="sticky top-0 w-full bg-slate-300 p-4 z-0">
+      <div className="sticky top-0 w-full bg-slate-300 p-4 z-10">
         <div className="flex items-center">
-          <h1 className="flex-1 text-3xl font-bold">semdesk</h1>
+          <h1 className="flex-1 text-3xl font-bold">semtex</h1>
 
           <form
             className="row"
             onSubmit={(e) => {
               e.preventDefault();
-              greet();
+              search();
             }}
           >
             <div className="flex items-center gap-2">
@@ -48,7 +47,7 @@ function App() {
         </div>
       </div>
 
-      <div className="container mx-auto px-2 py-4">
+      <div className="container mx-auto px-2 py-4 z-0">
         {data && <ResultList results={data} />}
       </div>
     </>

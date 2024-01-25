@@ -13,7 +13,7 @@ const manifest = {
   ],
   browser_specific_settings: {
     gecko: {
-      id: "semdesk@scalar.dev"
+      id: "semtex@scalar.dev"
     },
   },
   browser_action: {

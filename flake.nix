@@ -33,16 +33,22 @@
           webkitgtk
           librsvg
           (python3.withPackages(ps: with ps; [ torch ]))
+          libayatana-appindicator
         ];
       in
       {
         devShell = pkgs.mkShell {
           buildInputs = packages;
+          nativeBuildInputs = with pkgs; [
+              pkg-config
+          ];
 
           shellHook =
             ''
               export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
               export XDG_DATA_DIRS=${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS
+              export LIBTORCH_BYPASS_VERSION_CHECK=1
+              export LIBTORCH_USE_PYTORCH=1
             '';
         };
       });

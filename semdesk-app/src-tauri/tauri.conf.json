@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "semdesk-app",
-    "version": "0.0.0"
+    "productName": "semtex",
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -17,10 +17,14 @@
         "open": true
       }
     },
+    "systemTray": {
+      "iconPath": "icons/32x32.png",
+      "iconAsTemplate": true
+    },
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.tauri.dev",
+      "identifier": "dev.scalar.semtex",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",

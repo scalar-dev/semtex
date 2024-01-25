@@ -86,11 +86,11 @@ export function ResultList({ results }: Props) {
                   maximumFractionDigits: 1,
                 })}
               </p>
-              <p className="mt-1 text-xs leading-5 text-gray-500">
+              {/* <p className="mt-1 text-xs leading-5 text-gray-500">
                 <time dateTime={result.lastSeenDateTime}>
                   {result.lastSeen}
                 </time>
-              </p>
+              </p> */}
             </div>
           </div>
         </li>

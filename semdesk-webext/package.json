@@ -1,9 +1,9 @@
 {
-  "name": "vite-web-extension",
-  "version": "1.0.0",
-  "displayName": "Vite Web Extension",
-  "author": "@samrum/vite-plugin-web-extension",
-  "description": "A @samrum/vite-plugin-web-extension web extension",
+  "name": "semtex",
+  "version": "0.1.0",
+  "displayName": "semtex browser extension",
+  "author": "Scalar Labs",
+  "description": "An offline semantic search tool",
   "type": "module",
   "scripts": {
     "build": "tsc && vite build",
