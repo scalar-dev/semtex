@@ -5,8 +5,8 @@ use actix_web::rt::System;
 use std::thread;
 
 use semdesk_api::run_server;
-use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu, SystemTrayMenuItem, SystemTrayEvent};
 use tauri::Manager;
+use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -26,20 +26,28 @@ fn main() {
 
     tauri::Builder::default()
         .system_tray(tray)
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                event.window().hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
                     std::process::exit(0);
                 }
-                "show_hide" => {
-                    match app.get_window("main") {
-                        Some(window) => match window.is_visible().unwrap() {
-                            true => window.hide().unwrap(),
-                            false => window.show().unwrap()
-                        },
-                        _ => ()
-                    }
-                }
+                "show_hide" => match app.get_window("main") {
+                    Some(window) => match window.is_visible().unwrap() {
+                        true => window.hide().unwrap(),
+                        false => {
+                            window.show().unwrap();
+                            window.set_focus().unwrap()
+                        }
+                    },
+                    _ => ()
+                },
                 _ => {}
             },
             _ => {}
@@ -54,6 +62,12 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            _ => {}
+        });
 }

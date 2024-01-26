@@ -1,6 +1,9 @@
 ---
-name: Build
-on: push
+name: Release
+on:
+  push:
+    tags:
+    - 'v*'
 jobs:
   app:
     name: Build Desktop App
@@ -24,3 +27,13 @@ jobs:
           npm install
           npm run tauri -- build --verbose
         working-directory: ./semdesk-app
+
+      - name: Release with Notes
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/release/bundle/deb/*.deb
+            target/release/bundle/deb/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

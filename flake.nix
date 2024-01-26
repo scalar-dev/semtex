@@ -18,6 +18,7 @@
           dbus
           openssl_3
           librsvg
+          libayatana-appindicator
         ];
 
         packages = with pkgs; [
@@ -33,15 +34,11 @@
           webkitgtk
           librsvg
           (python3.withPackages(ps: with ps; [ torch ]))
-          libayatana-appindicator
         ];
       in
       {
         devShell = pkgs.mkShell {
           buildInputs = packages;
-          nativeBuildInputs = with pkgs; [
-              pkg-config
-          ];
 
           shellHook =
             ''
