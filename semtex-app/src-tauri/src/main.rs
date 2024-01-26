@@ -4,7 +4,7 @@
 use actix_web::rt::System;
 use std::thread;
 
-use semdesk_api::run_server;
+use semtex_api::run_server;
 use tauri::Manager;
 use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
 

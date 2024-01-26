@@ -1,4 +1,4 @@
-# semdesk-webext
+# semtex webext
 
 This template should help get you started developing a vanilla web extension in Vite.
 

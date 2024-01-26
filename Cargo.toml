@@ -1,5 +1,9 @@
 [workspace]
 
 members = [
-    "semdesk-api", "semdesk-vector", "migration"
-, "entity", "semdesk-app/src-tauri"]
+    "semtex-api",
+    "semtex-vector",
+    "migration",
+    "entity",
+    "semtex-app/src-tauri"
+]

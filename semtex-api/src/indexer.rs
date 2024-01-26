@@ -1,8 +1,8 @@
 use actix::dev::{MessageResponse, OneshotSender};
 use actix::prelude::*;
 use actix_web::rt::Runtime;
-use semdesk_vector::embed;
-use semdesk_vector::minilm::MiniLM;
+use semtex_vector::embed;
+use semtex_vector::minilm::MiniLM;
 
 use crate::Models;
 use crate::searcher::SearcherActor;

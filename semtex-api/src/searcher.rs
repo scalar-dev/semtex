@@ -1,15 +1,17 @@
+use std::borrow::Borrow;
 use std::cmp::{min, max};
 
 use actix::dev::{MessageResponse, OneshotSender};
 use actix::prelude::*;
-use semdesk_vector::embed;
-use semdesk_vector::jina_candle::JinaCandle;
-use semdesk_vector::minilm::MiniLM;
+use semtex_vector::embed;
+use semtex_vector::jina_candle::JinaCandle;
+use semtex_vector::minilm::MiniLM;
 use usearch::{new_index, Index};
 
 use usearch::ffi::{IndexOptions, MetricKind, ScalarKind};
 
 use crate::Models;
+use crate::util::xdg_dirs;
 
 #[derive(Message)]
 #[rtype(result = "SearchResponse")]
@@ -73,10 +75,11 @@ pub fn searcher(models: &Models) -> SearcherActor {
     };
 
     let index = new_index(&options).unwrap();
+    let index_path = xdg_dirs().place_data_file("index.usearch").unwrap().into_os_string().into_string().unwrap();
 
-    match index.load("index.usearch") {
+    match index.load(&index_path) {
         Err(_) => {
-            index.save("index.usearch").unwrap();
+            index.save(&index_path).unwrap();
         }
         Ok(_) => ()
     }
@@ -96,8 +99,6 @@ impl Handler<SearchMessage> for SearcherActor {
         match msg {
             SearchMessage::Search { query } => {
                 let v = embed(&mut self.minilm, &[&query]);
-                println!("Vector {}", v.len());
-                println!("Vector {}", v[0].len());
                 let results = self.index.search(&v[0], 10).unwrap();
 
                 return SearchResponse::SearchResult {
@@ -118,7 +119,8 @@ impl Handler<SearchMessage> for SearcherActor {
                 }
 
                 self.index.add(key, vector.as_slice()).unwrap();
-                self.index.save("index.usearch").unwrap();
+                let index_path = xdg_dirs().place_data_file("index.usearch").unwrap().into_os_string().into_string().unwrap();
+                self.index.save(&index_path).unwrap();
                 SearchResponse::IndexResult
             }
         }

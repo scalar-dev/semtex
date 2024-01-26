@@ -5011,7 +5011,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "semdesk-api"
+name = "semtex-api"
 version = "0.1.0"
 dependencies = [
  "actix",
@@ -5024,18 +5024,19 @@ dependencies = [
  "migration",
  "rand 0.8.5",
  "sea-orm",
- "semdesk-vector",
+ "semtex-vector",
  "serde",
  "serde_json",
  "usearch",
+ "xdg",
 ]
 
 [[package]]
-name = "semdesk-app"
+name = "semtex-app"
 version = "0.0.0"
 dependencies = [
  "actix-web",
- "semdesk-api",
+ "semtex-api",
  "serde",
  "serde_json",
  "tauri",
@@ -5043,7 +5044,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "semdesk-vector"
+name = "semtex-vector"
 version = "0.1.0"
 dependencies = [
  "candle-core",
@@ -7281,6 +7282,12 @@ dependencies = [
  "linux-raw-sys 0.4.12",
  "rustix 0.38.28",
 ]
+
+[[package]]
+name = "xdg"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213b7324336b53d2414b2db8537e56544d981803139155afa84f76eeebb7a546"
 
 [[package]]
 name = "yoke"

@@ -1,5 +1,6 @@
 mod indexer;
 mod searcher;
+mod util;
 
 use core::panic;
 use actix_cors::Cors;
@@ -20,9 +21,10 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
 };
 use searcher::{searcher, SearcherActor};
-use semdesk_vector::jina_candle::{self, JinaCandle};
-use semdesk_vector::minilm::MiniLM;
+use semtex_vector::jina_candle::{self, JinaCandle};
+use semtex_vector::minilm::MiniLM;
 use serde::{Deserialize, Serialize};
+use util::xdg_dirs;
 
 #[derive(Deserialize)]
 struct Source {
@@ -74,7 +76,7 @@ pub struct Models {
 
 #[get("/")]
 async fn root() -> impl Responder {
-    HttpResponse::Ok().body("semdesk")
+    HttpResponse::Ok().body("semtex")
 }
 
 #[post("/ingest")]
@@ -161,7 +163,8 @@ pub async fn run_server() -> std::io::Result<()> {
     let indexer_models = models.clone();
     let indexer = SyncArbiter::start(1, move || indexer(&indexer_models, &searher_addr));
 
-    let connection = sea_orm::Database::connect("sqlite://db.sqlite?mode=rwc")
+    let db_path = format!( "sqlite://{}?mode=rwc", xdg_dirs().place_data_file("db.sqlite").unwrap().display());
+    let connection = sea_orm::Database::connect(db_path)
         .await
         .unwrap();
     Migrator::up(&connection, None).await.unwrap();

@@ -18,7 +18,14 @@ jobs:
           apt-get install -y python3-pip
           pip3 install torch  --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Build
+      - name: Build Web Extension
+        run: |
+
+          npm install
+          npm run dist
+        working-directory: ./webext
+
+      - name: Build Desktop App
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib/python3.9/dist-packages/torch/lib
           export LIBTORCH_USE_PYTORCH=1
@@ -26,14 +33,14 @@ jobs:
 
           npm install
           npm run tauri -- build --verbose
-        working-directory: ./semdesk-app
+        working-directory: ./semtex-app
 
       - name: Release with Notes
         uses: softprops/action-gh-release@v1
         with:
           files: |
             target/release/bundle/deb/*.deb
-            target/release/bundle/deb/*.AppImage
+            target/release/bundle/appimage/*.AppImage
+            webext/web-ext-artifacts/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
