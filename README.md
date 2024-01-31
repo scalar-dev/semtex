@@ -1,7 +1,9 @@
 # semtex
 
 ## Install
-- Download and run the [desktop application](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_0.1.0_amd64.AppImage).
+WARNING: This is currently experimental software.
+
+- Download and run the [desktop application](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_0.1.0_amd64.AppImage) (currently Linux only).
 
 - Install the [browser extension](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_browser_extension-0.1.0.zip). Currently, this is only supported on browsers which allow you to install unsigned extensions (e.g. Firefox Nightly).
 
