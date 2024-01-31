@@ -1,4 +1,6 @@
 # semtex
+semtex is a set of tools for locally indexing and semantically searching
+your browser history.
 
 ## Install
 WARNING: This is currently experimental software.
@@ -8,8 +10,6 @@ WARNING: This is currently experimental software.
 - Install the [browser extension](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_browser_extension-0.1.0.zip). Currently, this is only supported on browsers which allow you to install unsigned extensions (e.g. Firefox Nightly).
 
 ## What is it?
-semtex is a set of tools for locally indexing and semantically searching
-your browser history. It comprises:
 - a rust-based backend to index text into a vector index ([usearch](https://github.com/unum-cloud/usearch))
 - a browser extension which tracks local browsing activity;
 - and a desktop application to search and managed your data.
