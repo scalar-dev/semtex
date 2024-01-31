@@ -1,5 +1,9 @@
 # semtex
 
+## Install
+- Download and run the [desktop application](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_0.1.0_amd64.AppImage)
+- Install the [browser extension](https://github.com/scalar-dev/semtex/releases/download/v0.1.2/semtex_browser_extension-0.1.0.zip).
+
 ## What is it?
 semtex is a set of tools for locally indexing and semantically searching
 your browser history. It comprises:
